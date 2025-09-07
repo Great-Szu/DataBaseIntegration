@@ -23,4 +23,5 @@ for name, phone, email in cursor:
 
 
 cursor.close()
+db.commit()
 db.close()
