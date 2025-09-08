@@ -2,7 +2,9 @@ import sqlite3
 
 db = sqlite3.connect("contacts.sqlite")
 cursor = db.cursor()
-for row in cursor.execute("SELECT * FROM sqlite_master"):
-    print(row)
+zapytanie = "SELECT * FROM contacts WHERE name = ?"
+user_input = input("Who you want to check? ")
+cursor.execute(zapytanie, (user_input,))
+print(cursor.fetchall())
 
 db.close()
