@@ -7,10 +7,12 @@ def get_integer(integer):
         try:
             number = int(input(integer))
             return  number
-        except ValueError:
-            print("Invalid number entered")
         except EOFError:
             sys.exit(0)
+        except Exception:
+            print("Invalid number entered")
+        finally:
+            print("The finally clause always executes")
 
 
 first_number = get_integer("Please enter first number:")
@@ -20,3 +22,5 @@ try:
     print("{} divided by {} is {}".format(first_number, second_number, first_number/second_number))
 except ZeroDivisionError:
     print("Can't divide by zero")
+else:
+    print("Division performed successfully")
