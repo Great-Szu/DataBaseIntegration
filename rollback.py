@@ -4,12 +4,18 @@ import datetime
 db = sqlite3.connect("accounts.sqlite")
 db.execute("CREATE TABLE IF NOT EXISTS accounts (name TEXT PRIMARY KEY NOT NULL,"
            " balance INTEGER NOT NULL)")
-db.execute("CREATE TABLE IF NOT EXISTS history (time TIMESTAMP NOT NULL,"
+db.execute("CREATE TABLE IF NOT EXISTS history (time TIMESTAMP NOT NULL, 'original timezone' TEXT NOT NULL,"
            " account TEXT NOT NULL, amount INTEGER NOT NULL, PRIMARY KEY (time, account))")
+db.execute("CREATE VIEW IF NOT EXISTS localhistory AS"
+           " SELECT strftime('%Y-%m-%d %H:%M:%f', history.time, 'localtime') AS localtime,"
+           " history.'original timezone', history.account, history.amount FROM history ORDER BY history.time")
 
 def _current_time():
-    return datetime.datetime.now(datetime.UTC).isoformat()
+    return datetime.datetime.now(datetime.UTC)
 
+def _local_time_zone():
+    local_utc = str(datetime.datetime.now().astimezone())
+    return local_utc[-6:]
 
 
 class Account(object):
@@ -32,8 +38,9 @@ class Account(object):
     def _save_update(self, amount):
         new_balance = self._balance + amount
         deposit_time = _current_time()
+        original_timezone = _local_time_zone()
         db.execute("UPDATE accounts SET balance = ? WHERE (name = ?)", (new_balance, self.name))
-        db.execute("INSERT INTO history VALUES(?, ?, ?)", (deposit_time, self.name, amount))
+        db.execute("INSERT INTO history VALUES(?, ?, ?, ?)", (deposit_time, original_timezone, self.name, amount))
         db.commit()
         self._balance = new_balance
 
