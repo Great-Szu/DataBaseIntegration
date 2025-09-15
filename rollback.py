@@ -13,6 +13,7 @@ db.execute("CREATE VIEW IF NOT EXISTS localhistory AS"
 def _current_time():
     return datetime.datetime.now(datetime.UTC)
 
+
 def _local_time_zone():
     local_utc = str(datetime.datetime.now().astimezone())
     return local_utc[-6:]
@@ -38,11 +39,16 @@ class Account(object):
     def _save_update(self, amount):
         new_balance = self._balance + amount
         deposit_time = _current_time()
-        original_timezone = _local_time_zone()
-        db.execute("UPDATE accounts SET balance = ? WHERE (name = ?)", (new_balance, self.name))
-        db.execute("INSERT INTO history VALUES(?, ?, ?, ?)", (deposit_time, original_timezone, self.name, amount))
-        db.commit()
-        self._balance = new_balance
+        try:
+            original_timezone = _local_time_zone()
+            db.execute("UPDATE accounts SET balance = ? WHERE (name = ?)", (new_balance, self.name))
+            db.execute("INSERT INTO history VALUES(?, ?, ?, ?)", (deposit_time, original_timezone, self.name, amount))
+        except sqlite3.Error:
+            db.rollback()
+        else:
+            db.commit()
+            self._balance = new_balance
+
 
     def deposit(self, amount: int) -> float:
         if amount > 0.0:
