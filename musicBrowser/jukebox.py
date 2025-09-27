@@ -21,6 +21,7 @@ class DataListBox(Scrollbox):
 
         self.linked_box = None
         self.link_field = None
+        self.ids = []  # <== tutaj będziemy przechowywać id
 
         self.cursor = connection.cursor()
         self.table = table
@@ -36,6 +37,7 @@ class DataListBox(Scrollbox):
 
     def clear(self):
         self.delete(0, tkinter.END)
+        self.ids.clear()   # <== trzeba wyczyścić listę ID
 
     def link(self, widget, link_field):
         self.linked_box = widget
@@ -44,30 +46,23 @@ class DataListBox(Scrollbox):
     def requery(self, link_value=None):
         if link_value and self.link_field:
             sql = self.sql_select + " WHERE " + self.link_field + "=?" + self.sql_sort
-            print(sql) # TODO delete this line
             self.cursor.execute(sql, (link_value,))
         else:
-            print(self.sql_select + self.sql_sort)          # TODO delete this line
             self.cursor.execute(self.sql_select + self.sql_sort)
 
-        # clear the listbox contents before re-loading
         self.clear()
         for value in self.cursor:
-            self.insert(tkinter.END, value[0])
+            self.insert(tkinter.END, value[0])  # pokazujemy tylko nazwę
+            self.ids.append(value[1])           # zapamiętujemy id
 
         if self.linked_box:
             self.linked_box.clear()
 
     def on_select(self, event):
         if self.linked_box:
-            print(self is event.widget)
             index = self.curselection()[0]
-            value = self.get(index),
-
-            # get the artist ID form the database
-            link_id = self.cursor.execute(self.sql_select + " WHERE " + self.field + "=?", value).fetchone()[1]
+            link_id = self.ids[index]  # <== zamiast SELECT po nazwie
             self.linked_box.requery(link_id)
-
 
 if __name__ == '__main__':
     conn = sqlite3.connect("music.db")
